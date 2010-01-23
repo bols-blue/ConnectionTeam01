@@ -8,7 +8,6 @@ import backport.android.bluetooth.BluetoothDevice;
 
 public class Communicate implements Runnable {
 
-	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		

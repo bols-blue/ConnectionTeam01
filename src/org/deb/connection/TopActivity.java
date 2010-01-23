@@ -1,22 +1,53 @@
 package org.deb.connection;
 
+import java.util.Set;
+
+import org.deb.connection.bluetooth_thread.Constants;
+import org.deb.connection.rfcomm_master_service.MasterService;
+import org.deb.connection.spp_slave_service.SPPSlaveService;
+
 import backport.android.bluetooth.BluetoothAdapter;
 import backport.android.bluetooth.BluetoothDevice;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class TopActivity extends Activity implements OnClickListener {
 	final String TAG = "DebCon";
+	final Handler mHandler= new MyHandler() ;
+	
+	final class MyHandler extends Handler implements Constants {
+
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MESSAGE_START:
+				showToast(SERVICE + ":server started");
+				break;
+			case MESSAGE_STOP:
+				showToast(SERVICE + ":server stopped");
+				break;
+			}
+		}
+	}
 
 	Button bluetoothButton;
 	Button handwritingButton;
 	BluetoothAdapter mLocalDevice;
+	private BluetoothDevice mRemoteDevice;
+	private boolean debug = true;
+	private String mBTAddress;
 	static final private int REQUEST_ENABLE_BT = 100;
 
 	@Override
@@ -28,14 +59,25 @@ public class TopActivity extends Activity implements OnClickListener {
 		handwritingButton = (Button) findViewById(R.id.handwriting_button);
 		bluetoothButton.setOnClickListener(this);
 		handwritingButton.setOnClickListener(this);
+
+        // Register for broadcasts when a device is discovered
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        this.registerReceiver(mReceiver, filter);
+
+        // Register for broadcasts when discovery has finished
+        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        this.registerReceiver(mReceiver, filter);
 	}
 
-	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
 		switch (v.getId()) {
 		case R.id.bluetooth_button:
-			init();
+			Intent serviceIntent = new Intent(this, MasterService.class);
+			startService(serviceIntent);
+			Intent serverIntent = new Intent(this, DeviceListActivity.class);
+			startActivityForResult(serverIntent, Constants.REQUEST_CONNECT_DEVICE);
+//			init();
 			// TODO start bluetooth activity
 			Log.v(TAG, "Start Bluetooth Activity");
 			break;
@@ -81,15 +123,59 @@ public class TopActivity extends Activity implements OnClickListener {
 	}
 
 	protected void init() {
-		int a;
-		a=10;
 		if (this.ensureSupported()) {
 			;
 		}
-		if (this.ensureSupported()) {
+		Log.d(TAG, "ensureSupported");
+		if (this.ensureEnabled()) {
 			;
 		}
+		Log.d(TAG, "ensureEnabled");
+        Set<BluetoothDevice> pairedDevices = mLocalDevice.getBondedDevices();
+        Log.d(TAG, "getBondedDevices:" +pairedDevices.size() + ":");
+        doDiscovery();
+        mLocalDevice.getScanMode();
+        Log.d(TAG, "getBondedDevices:" +pairedDevices.size() + ":");
+        for(int i =0; i < pairedDevices.size();i++){
+        	Log.d(TAG,pairedDevices.iterator().next().getName());
+        }
+	}
+    /**
+     * Start device discover with the BluetoothAdapter
+     */
+    private void doDiscovery() {
+        Log.d(TAG, "doDiscovery()");
 
+        // Indicate scanning in the title
+        setProgressBarIndeterminateVisibility(true);
+
+        // If we're already discovering, stop it
+        if (mLocalDevice.isDiscovering()) {
+        	mLocalDevice.cancelDiscovery();
+        }
+
+        // Request discover from BluetoothAdapter
+        mLocalDevice.startDiscovery();
+    }
+    /**
+     * アクティビティへの院展との戻り値処理
+     */
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case Constants.REQUEST_CONNECT_DEVICE:
+			if (resultCode == Activity.RESULT_OK) {
+				if(debug ) Log.d(TAG, "get address ");
+				mBTAddress = data.getExtras().getString(
+						DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+				if(debug ) Log.d(TAG, "get address "+mBTAddress);
+//				mRemoteDevice = mLocalDevice.getRemoteDevice(mBTAddress);
+				if(debug ) Log.d(TAG, "startClient ");
+				Intent serviceIntent = new Intent(this, SPPSlaveService.class);
+				serviceIntent.putExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS, mBTAddress);
+				startService(serviceIntent);
+			}
+			break;
+		}
 	}
 
 	/**
@@ -98,6 +184,7 @@ public class TopActivity extends Activity implements OnClickListener {
 	 * @param data
 	 */
 	void onRequestEnableResult(int resultCode, Intent data) {
+		
 		boolean enabled = (resultCode == Activity.RESULT_OK);
 
 		// ACTION_REQUEST_ENABLE returns incorrect resultCode on Platform2.0.
@@ -122,5 +209,68 @@ public class TopActivity extends Activity implements OnClickListener {
 		} catch (IllegalArgumentException invalidBtAddr) {
 		}
 		return remDev;
+	}
+	
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+		stopClient();
+        // Make sure we're not doing discovery anymore
+        if (mLocalDevice != null) {
+        	mLocalDevice.cancelDiscovery();
+        }
+
+        // Unregister broadcast listeners
+        this.unregisterReceiver(mReceiver);
+    }
+	
+    // The BroadcastReceiver that listens for discovered devices and
+    // changes the title when discovery is finished
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // If it's already paired, skip it, because it's been listed already
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                	Log.d(TAG,device.getName() + "\n" + device.getAddress());
+                }
+            // When discovery is finished, change the Activity title
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                setProgressBarIndeterminateVisibility(false);
+
+            }
+        }
+    };
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+//		Log.i(TAG, "onKeyDown");
+
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			return super.onKeyDown(keyCode, event);
+		}
+
+        Intent intent = new Intent();
+
+        intent.setAction(Intent.ACTION_ALL_APPS);
+        intent.setType("text/bt_test");
+        intent.putExtra("data", keyCode);
+        sendBroadcast(intent);
+
+        Log.i("onKeyDown",String.valueOf(keyCode));
+		return super.onKeyDown(keyCode, event);
+	}
+	void stopClient() {
+		Intent serviceIntent = new Intent(this, SPPSlaveService.class);
+		stopService(serviceIntent);
+	}
+	
+	void showToast(String text) {
+		Toast t = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+		t.show();
 	}
 }

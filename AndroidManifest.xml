@@ -11,8 +11,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
+        <activity android:name=".DeviceListActivity" android:label="@string/select_device"
+            android:theme="@android:style/Theme.Dialog" android:configChanges="orientation|keyboardHidden" />
+        
+        <service android:name=".rfcomm_master_service.MasterService" android:process=":master_service" />
+        <service
+          android:name=".spp_slave_service.SPPSlaveService" android:process=":slave_service"
+          android:exported="true">
+          <intent-filter>
+            <action android:name="android.intent.action.INSERT" />
+            <action android:name="android.intent.action.ALL_APPS" />
+            <data android:mimeType="text/bt_test" />
+          </intent-filter>
+        </service>
+        
   <activity android:name="backport.android.bluetooth.RequestEnableActivity"
     android:label="Bluetooth Permission Request" android:noHistory="true"
     android:theme="@android:style/Theme.Translucent.NoTitleBar"
@@ -27,6 +39,7 @@
   </activity>
 
 
+        
   <activity android:name="backport.android.bluetooth.RequestDiscoverableActivity"
     android:label="Bluetooth Permission Request" android:noHistory="true"
     android:theme="@android:style/Theme.Translucent.NoTitleBar"
@@ -61,7 +74,6 @@
   </receiver>
 
 </application>
-
 
 <uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
 <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"></uses-permission>
