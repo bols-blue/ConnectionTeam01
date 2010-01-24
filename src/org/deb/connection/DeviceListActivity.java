@@ -18,6 +18,8 @@ package org.deb.connection;
 
 import java.util.Set;
 
+import org.deb.connection.bluetooth_thread.Constants;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -104,7 +106,7 @@ public class DeviceListActivity extends Activity {
 
         // Get a set of currently paired devices
         Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
-        mPairedDevicesArrayAdapter.add("Not Start cliant" + "\n" + "");
+        mPairedDevicesArrayAdapter.add("Not Start cliant" + "\n" + "                 ");
         
         // If there are paired devices, add each one to the ArrayAdapter
         if (pairedDevices.size() > 0) {
@@ -166,6 +168,13 @@ public class DeviceListActivity extends Activity {
             String address = info.substring(info.length() - 17);
             // info is ?
             if(debug)Log.d(TAG,"info :"+info +": address: "+address);
+            if(address.equalsIgnoreCase("                 ")){
+                Intent intent = new Intent();
+
+                // Set result and finish this Activity
+                setResult(Constants.RESULT_NO_START, intent);
+                finish();
+            }
             // Create the result Intent and include the MAC address
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_ADDRESS, address);

@@ -73,8 +73,7 @@ public class TopActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		switch (v.getId()) {
 		case R.id.bluetooth_button:
-			Intent serviceIntent = new Intent(this, MasterService.class);
-			startService(serviceIntent);
+			startServer();
 			Intent serverIntent = new Intent(this, DeviceListActivity.class);
 			startActivityForResult(serverIntent, Constants.REQUEST_CONNECT_DEVICE);
 //			init();
@@ -215,6 +214,7 @@ public class TopActivity extends Activity implements OnClickListener {
     protected void onDestroy() {
         super.onDestroy();
 		stopClient();
+		stopServer();
         // Make sure we're not doing discovery anymore
         if (mLocalDevice != null) {
         	mLocalDevice.cancelDiscovery();
@@ -268,7 +268,15 @@ public class TopActivity extends Activity implements OnClickListener {
 		Intent serviceIntent = new Intent(this, SPPSlaveService.class);
 		stopService(serviceIntent);
 	}
-	
+	void startServer() {
+		Intent serviceIntent = new Intent(this, MasterService.class);
+		startService(serviceIntent);
+	}
+
+	void stopServer() {
+		Intent serviceIntent = new Intent(this, MasterService.class);
+		stopService(serviceIntent);
+	}
 	void showToast(String text) {
 		Toast t = Toast.makeText(this, text, Toast.LENGTH_SHORT);
 		t.show();

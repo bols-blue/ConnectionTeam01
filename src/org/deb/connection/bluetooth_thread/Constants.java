@@ -15,4 +15,5 @@ public interface Constants {
 	static final int MESSAGE_TOAST = 9;
 	static final int MESSAGE_START = 6;
 	static final String SERVICE = "DevCon";
+	static final int RESULT_NO_START =100;
 }
