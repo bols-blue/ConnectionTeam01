@@ -3,9 +3,7 @@ package org.deb.connection;
 import java.util.Set;
 
 import org.deb.connection.bluetooth_thread.Constants;
-import org.deb.connection.rfcomm_master_service.MasterService;
-import org.deb.connection.spp_slave_service.SPPSlaveService;
-
+import org.deb.connection.commiunication_server.CommunicateService;
 import backport.android.bluetooth.BluetoothAdapter;
 import backport.android.bluetooth.BluetoothDevice;
 import android.app.Activity;
@@ -169,7 +167,7 @@ public class TopActivity extends Activity implements OnClickListener {
 				if(debug ) Log.d(TAG, "get address "+mBTAddress);
 //				mRemoteDevice = mLocalDevice.getRemoteDevice(mBTAddress);
 				if(debug ) Log.d(TAG, "startClient ");
-				Intent serviceIntent = new Intent(this, SPPSlaveService.class);
+				Intent serviceIntent = new Intent(this, CommunicateService.class);
 				serviceIntent.putExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS, mBTAddress);
 				startService(serviceIntent);
 			}
@@ -265,16 +263,16 @@ public class TopActivity extends Activity implements OnClickListener {
 		return super.onKeyDown(keyCode, event);
 	}
 	void stopClient() {
-		Intent serviceIntent = new Intent(this, SPPSlaveService.class);
+		Intent serviceIntent = new Intent(this, CommunicateService.class);
 		stopService(serviceIntent);
 	}
 	void startServer() {
-		Intent serviceIntent = new Intent(this, MasterService.class);
+		Intent serviceIntent = new Intent(this, CommunicateService.class);
 		startService(serviceIntent);
 	}
 
 	void stopServer() {
-		Intent serviceIntent = new Intent(this, MasterService.class);
+		Intent serviceIntent = new Intent(this, CommunicateService.class);
 		stopService(serviceIntent);
 	}
 	void showToast(String text) {

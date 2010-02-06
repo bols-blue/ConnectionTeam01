@@ -14,9 +14,8 @@
         <activity android:name=".DeviceListActivity" android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog" android:configChanges="orientation|keyboardHidden" />
         
-        <service android:name=".rfcomm_master_service.MasterService" android:process=":master_service" />
         <service
-          android:name=".spp_slave_service.SPPSlaveService" android:process=":slave_service"
+          android:name=".commiunication_server.CommunicateService" android:process=":communicate_service"
           android:exported="true">
           <intent-filter>
             <action android:name="android.intent.action.INSERT" />

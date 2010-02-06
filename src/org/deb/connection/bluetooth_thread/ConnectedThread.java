@@ -93,6 +93,15 @@ public abstract class ConnectedThread extends Thread {
 			cancel();
 		}
 	}
+	
+	public final void writeByteArray(byte[] buff) {
+		try {
+			mOutStream.write(buff);
+		} catch (IOException e) {
+			connectionLost(e);
+			cancel();
+		}
+	}
 
 	public abstract void connectionLost(IOException error);
 

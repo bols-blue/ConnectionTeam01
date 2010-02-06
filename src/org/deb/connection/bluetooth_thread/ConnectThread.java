@@ -14,13 +14,20 @@ public abstract class ConnectThread extends Thread {
 	final ReentrantReadWriteLock mLock;
 	boolean mClosed;
 	BluetoothSocket mSocket;
-
+	/**
+	 * 
+	 * @param remoteDevice
+	 * @param uuid
+	 */
 	protected ConnectThread(BluetoothDevice remoteDevice, UUID uuid) {
 		mRemoteDevice = remoteDevice;
 		mUuid = uuid;
 		mLock = new ReentrantReadWriteLock();
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void run() {
 		boolean succeed = ensureSocket();
@@ -32,6 +39,12 @@ public abstract class ConnectThread extends Thread {
 		waitForConnectionEstablished();
 	}
 
+	/**
+	 * 
+	 * 
+	 * cancel
+	 *
+	 */
 	public final void cancel() {
 		mLock.readLock().lock();
 
@@ -56,7 +69,12 @@ public abstract class ConnectThread extends Thread {
 		} catch (IOException e) {
 		}
 	}
-
+	/**
+	 * 
+	 * @return
+	 * ensureSocket
+	 *
+	 */
 	final boolean ensureSocket() {
 		try {
 			BluetoothSocket socket = mRemoteDevice
