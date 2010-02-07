@@ -168,6 +168,7 @@ public class TopActivity extends Activity implements OnClickListener {
 //				mRemoteDevice = mLocalDevice.getRemoteDevice(mBTAddress);
 				if(debug ) Log.d(TAG, "startClient ");
 				Intent serviceIntent = new Intent(this, CommunicateService.class);
+				serviceIntent.setAction("StartClient");
 				serviceIntent.putExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS, mBTAddress);
 				startService(serviceIntent);
 			}
@@ -268,6 +269,7 @@ public class TopActivity extends Activity implements OnClickListener {
 	}
 	void startServer() {
 		Intent serviceIntent = new Intent(this, CommunicateService.class);
+		serviceIntent.setAction("StartServer");
 		startService(serviceIntent);
 	}
 
